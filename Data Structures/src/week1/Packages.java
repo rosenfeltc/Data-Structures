@@ -8,6 +8,7 @@ public class Packages
 	{
 		Random generator = new Random();
 		
-		int randomNumber = generator.nextInt() % 101;
+		int randomNumber = Math.abs(generator.nextInt()) % 101;
+		System.out.println(randomNumber);
 	}
 }
