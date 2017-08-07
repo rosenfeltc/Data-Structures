@@ -2,6 +2,8 @@ package week4;
 
 import javax.swing.JOptionPane;
 
+import org.omg.CORBA.Current;
+
 public class BinaryTree 
 {
 	public static void main(String[] args)
@@ -11,9 +13,21 @@ public class BinaryTree
 		theTree.add("Andrew", "555-555-0002");
 		theTree.add("Zach", "555-555-0003");
 		theTree.printInOrder();
+		System.out.println("************************");
+		theTree.printInPreorder();
+		System.out.println("************************");
+		theTree.printInPostorder();
+		System.out.println("************************");
 		System.out.println("Tolga's phone number is " + theTree.search("Tolga"));
 		System.out.println("Zach's phone number is " + theTree.search("Zach"));
+		System.out.println(theTree.search("Chris"));
+		theTree.delete("tolga");
+		theTree.printInOrder();
+		theTree.delete("andrew");
+		theTree.printInOrder();
 	}
+	
+	// Node Class
 	private class Node
 	{
 		// Fields
@@ -179,6 +193,7 @@ public class BinaryTree
 			{
 				// Add node to the left
 				current.setLeftChild(newNode);
+				newNode.setParent(current);
 				return;
 			}
 			// Left Side is not empty
@@ -196,6 +211,7 @@ public class BinaryTree
 			{
 				// Add node to the right
 				current.setRightChild(newNode);
+				newNode.setParent(current);
 				return;
 			}
 			// Right side is not empty
@@ -214,7 +230,7 @@ public class BinaryTree
 	}// END printInOrder METHOD
 	
 	// Recursive method that helps printInOrder
-	public void printInOrderRecursive(Node current)
+	private void printInOrderRecursive(Node current)
 	{
 		// Current Node is not null making base case implicitly when current Node is null
 		if(current != null)
@@ -224,6 +240,40 @@ public class BinaryTree
 			printInOrderRecursive(current.getRightChild()); // right
 		}
 	}// END printInOrderRecursive METHOD
+	
+	// Method that traverses the list and prints each Node name in preorder
+	public void printInPreorder()
+	{
+		printInPreorderRecursive(getRoot());
+	}
+	
+	// Recursive method that helps printInPreorder
+	private void printInPreorderRecursive(Node current)
+	{
+		if(current != null)
+		{
+			System.out.println(current.getName());
+			printInPreorderRecursive(current.getLeftChild());
+			printInPreorderRecursive(current.getRightChild());
+		}
+	}
+	
+	// Method that traverses the list and prints each Node name in postorder
+	public void printInPostorder()
+	{
+		printInPostorderRecursive(getRoot());
+	}
+	
+	// Recursive method that helps printInPostorder
+	private void printInPostorderRecursive(Node current)
+	{
+		if(current != null)
+		{
+			printInPostorderRecursive(current.getLeftChild());
+			printInPostorderRecursive(current.getRightChild());
+			System.out.println(current.getName());
+		}
+	}
 	
 	// Method that searches for the Node with the name given and returns that Nodes phone number
 	public String search(String name)
@@ -241,7 +291,11 @@ public class BinaryTree
 	// Recursive method that helps the search method
 	private Node searchRecursive(Node current, String name)
 	{
-		if(name.equalsIgnoreCase(current.getName()))
+		if(current == null)
+		{
+			return null;
+		}
+		else if(name.equalsIgnoreCase(current.getName()))
 		{
 			return current;
 		}
@@ -281,4 +335,177 @@ public class BinaryTree
 		return null;
 	}
 	
+	// Method to delete node with the given String
+	public void delete(String name)
+	{
+		Node toDelete = searchNonRecursive(getRoot(), name);
+		
+		// Node not found in tree - do nothing
+		if(toDelete == null)
+		{
+			return;
+		}
+		// Node to delete is the root
+		else if(toDelete == getRoot())
+		{
+			// is leaf
+			if(toDelete.isLeaf())
+			{
+				setRoot(null);
+			}
+			// Only has a left child
+			else if(toDelete.getRightChild() == null)
+			{
+				setRoot(toDelete.getLeftChild());
+				toDelete.getLeftChild().setParent(null);
+			}
+			// Only has a right child
+			else if(toDelete.getLeftChild() == null)
+			{
+				setRoot(toDelete.getRightChild());
+				toDelete.getRightChild().setParent(null);
+			}
+			// has two children
+			else
+			{
+				Node minimum = findMinimum(toDelete.getRightChild());
+				
+				// Swap the minimum contents with the Node to delete and then delete the used to be minimum
+				toDelete.setName(minimum.getName());
+				toDelete.setPhoneNumber(minimum.getPhoneNumber());
+				
+				// Minimum is a right child
+				if(minimum.getParent().getRightChild() == minimum)
+				{
+					// Minimum has a right child
+					if(minimum.getRightChild() != null)
+					{
+						minimum.getParent().setRightChild(minimum.getRightChild());
+						minimum.getRightChild().setParent(minimum.getParent());
+					}
+					// Minimum is a leaf
+					else
+					{
+						minimum.getParent().setRightChild(null);
+					}
+				}
+				// Minimum is a left child
+				else
+				{
+					// Minimum has a right child
+					if(minimum.getRightChild() != null)
+					{
+						minimum.getParent().setLeftChild(minimum.getRightChild());
+						minimum.getRightChild().setParent(minimum.getParent());
+					}
+					// Minimum is a leaf
+					else
+					{
+						minimum.getParent().setLeftChild(null);
+					}
+				}
+			}
+		}
+		// Any other node except for root
+		else
+		{
+			// Node to delete has no children
+			if(toDelete.isLeaf())
+			{
+				// Node to delete is right child
+				if(toDelete.getParent().getRightChild() == toDelete)
+				{
+					toDelete.getParent().setRightChild(null);
+				}
+				// Node to delete is left child
+				else
+				{
+					toDelete.getParent().setLeftChild(null);
+				}
+			}
+			// Node to delete has a right child
+			else if(toDelete.getLeftChild() == null)
+			{
+				// Node to delete is right child
+				if(toDelete.getParent().getRightChild() == toDelete)
+				{
+					toDelete.getParent().setRightChild(toDelete.getRightChild());
+					toDelete.getRightChild().setParent(toDelete.getParent());
+				}
+				// Node to delete is left child
+				else
+				{
+					toDelete.getParent().setLeftChild(toDelete.getRightChild());
+					toDelete.getRightChild().setParent(toDelete.getParent());
+				}
+			}
+			// Node to delete has a left child
+			else if(toDelete.getRightChild() == null)
+			{
+				// Node to delete is a right child
+				if(toDelete.getParent().getRightChild() == toDelete)
+				{
+					toDelete.getParent().setRightChild(toDelete.getLeftChild());
+					toDelete.getLeftChild().setParent(toDelete.getParent());
+				}
+				// Node to delete is a left child
+				else
+				{
+					toDelete.getParent().setLeftChild(toDelete.getLeftChild());
+					toDelete.getLeftChild().setParent(toDelete.getParent());
+				}
+			}
+			// Node to delete has two children
+			else
+			{
+				Node minimum = findMinimum(toDelete.getRightChild());
+				
+				// Swap the contents in minimum with the node to delete and then delete the minimum
+				toDelete.setName(minimum.getName());
+				toDelete.setPhoneNumber(minimum.getPhoneNumber());
+				
+				// Minimum is right child
+				if(minimum.getParent().getRightChild() == minimum)
+				{
+					// Minimum has no children
+					if(minimum.getRightChild() == null)
+					{
+						minimum.getParent().setRightChild(null);
+					}
+					// Minimum has a right child
+					else
+					{
+						minimum.getParent().setRightChild(minimum.getRightChild());
+						minimum.getRightChild().setParent(minimum.getParent());
+					}
+				}
+				// Minimum is a left child
+				if(minimum.getParent().getLeftChild() == minimum)
+				{
+					// Minimum has no children
+					if(minimum.getRightChild() == null)
+					{
+						minimum.getParent().setLeftChild(null);
+					}
+					// Minimum has a right child
+					else
+					{
+						minimum.getParent().setLeftChild(minimum.getLeftChild());
+						minimum.getLeftChild().setParent(minimum.getParent());
+					}
+				}
+			}
+		}
+	}
+	
+	// Method that finds the minimum Node in the given subtree
+	private Node findMinimum(Node current)
+	{
+		if(current.getLeftChild() == null)
+		{
+			return current;
+		}
+		
+		return findMinimum(current.getLeftChild());
+	}
 }
